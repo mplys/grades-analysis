@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 /**
- * Entity of Student
+ * Student entity
  */
 public class StudentInfo implements Serializable {
 	private static final long serialVersionUID = -310842754445106856L;
@@ -14,50 +14,42 @@ public class StudentInfo implements Serializable {
 	private String name;
 
 	/**
-	 * Applicant's age
+	 * Applicant's IC number
 	 */
 	private long icNumber;
 
 	/**
-	 * Applicant's age
+	 * Applicant's matrix number
 	 */
 	private long martixNumber;
 
 	/**
-	 * The amount of money in the Tabung Haji account
+	 * Applicant's group
 	 */
 	private int group;
 
 	/**
-	 * True if this will be the applicant's first Haj
+	 * Amount of subjects
 	 */
 	private int numberOfSubjects;
 
 	/**
-	 * True if this will be the applicant's first Haj
+	 * Array of subject codes
 	 */
 	private int[] subjectCode;
 
 	/**
-	 * True if this will be the applicant's first Haj
+	 * Applicant's marks
 	 */
 	private int[] marks;
 
 	/**
-	 * True if this will be the applicant's first Haj
+	 * Applicant's grades
 	 */
 	private int[] grades;
 
 	/**
-	 * 
-	 * @param name
-	 * @param icNumber
-	 * @param martixNumber
-	 * @param group
-	 * @param numberOfSubjects
-	 * @param subjectCode
-	 * @param marks
-	 * @param grades
+	 * Constructor with all parameters
 	 */
 	public StudentInfo(String name, long icNumber, long martixNumber, int group, int numberOfSubjects,
 			int[] subjectCode, int[] marks, int[] grades) {

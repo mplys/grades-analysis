@@ -7,45 +7,52 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import javax.swing.plaf.synth.SynthSpinnerUI;
-
+@SuppressWarnings("resource")
 public class ApplicationHandler {
 
-	private static String fileName = "Content/studentInfo.txt";
-	private static List<StudentInfo> studentsList = new LinkedList<StudentInfo>();
+	private static File fileName ;
+	
+	/**
+	 * Minimal grade for passed exam
+	 */
 	private static final int MIN_GRADE = 3;
 
 	public static void main(String args[]) {
 		try {
 			ApplicationHandler handler = new ApplicationHandler();
-			studentsList = handler.readObjectsFromFile();
+			
+			fileName = new File(handler.getClass().getResource("/studentInfo.txt").getFile());
+
 			handler.formMenuChoices();
-			do {
+			while (true) {
 				handler.switchAction();
-			} while (true);
+			}
 
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (IOException e) {
+			System.err.println("Failure to execute. See message: " + e.getMessage());
 		}
-
 	}
 
 	public void formMenuChoices() {
 		System.out.println("\n");
-		System.out.println("1) Add new student information - 1 \n" + "2) Delete student information - 2 \n"
-				+ "3) Update student information - 3 \n" + "4) Display all data information - 4 \n"
-				+ "5) Display all passed students - 5 \n" + "6) Display all failed students - 6 \n"
-				+ "7) Display highest of subject - 7 \n" + "8) Display lowest of subject - 8 \n"
-				+ "9) Display subject with most failed student - 9 \n"
-				+ "10) Display subject with most passed student - 10 \n"
-				+ "11) Search student information (name/matrix id) - 11 \n" + "12) Exit - 12 \n");
-		System.out.println("* Please, type the number of action");
+		System.out.println("*** Please, type the number of action ***");
+		System.out.println("0 -> Display user dialog");
+		System.out.println("1 -> Add new student information");
+		System.out.println("2 -> Delete student information");
+		System.out.println("3 -> Update student information");
+		System.out.println("4 -> Display all data information");
+		System.out.println("5 -> Display all passed students");
+		System.out.println("6 -> Display all failed students");
+		System.out.println("7 -> Display highest of subject");
+		System.out.println("8 -> Display lowest of subject");
+		System.out.println("9 -> Display subject with most failed student");
+		System.out.println("10 -> Display subject with most passed student");
+		System.out.println("11 -> Search student information (name/matrix id)");
+		System.out.println("12 -> Exit");
 		System.out.println("\n");
 	}
 
@@ -53,32 +60,32 @@ public class ApplicationHandler {
 		int action;
 		Scanner sc = new Scanner(System.in);
 		action = sc.nextInt();
+		
 		switch (action) {
+		
+		case 0:
+			formMenuChoices();
+			break;
 
 		case 1:
 			if (addNewStudenInfo())
-				System.out.println("Information has been added");
+				System.out.println("Student has been added");
+			else
+				System.err.println("Failure to add new student");
 			break;
 
 		case 2:
-			System.out.println("Enter student matrix mumber");
-			Scanner scDelete = new Scanner(System.in);
-			long number = scDelete.nextLong();
-			if (deleteStudentInfo(number))
-				System.out.println("Information has been deleted");
+			if (deleteStudentInfo() != -1)
+				System.out.println("Student has been deleted");
 			else
-				System.out.println("No student with the matrix number " + number);
+				System.err.println("No student with such matrix number");
 			break;
 
 		case 3:
-			System.out.println("Enter student matrix mumber");
-			Scanner scUpdate = new Scanner(System.in);
-			long numberUp = scUpdate.nextLong();
-			System.out.println("Input new information");
-			if (updateStudentInfo(numberUp))
+			if (updateStudentInfo() != -1)
 				System.out.println("Information has been updated");
 			else
-				System.err.println("Student with matrix number " + numberUp + " was not found");
+				System.err.println("Student with such matrix number was not found");
 			break;
 
 		case 4:
@@ -114,11 +121,14 @@ public class ApplicationHandler {
 			break;
 			
 		case 12:
-		default:
 			System.exit(0);
+			break;
+			
+		default:
+			System.exit(1);
 		}
-
-		formMenuChoices();
+		
+		System.out.print("\n>");
 	}
 
 	private void lookupStudent() throws IOException {
@@ -131,44 +141,63 @@ public class ApplicationHandler {
 		for (StudentInfo app : list) {
 			if (app.getMartixNumber() == matrixNumber) {
 				System.out.println(app);
-				break;
+				return;
 			}
 		}
+		
+		System.err.println("Student with " + matrixNumber + " does not exist");
 	}
 
-	private boolean deleteStudentInfo(long number) throws IOException {
-		for (int i = 0; i < studentsList.size(); i++) {
-			if (studentsList.get(i).getMartixNumber() == number) {
-				studentsList.remove(i);
-				writeObjectsToFile(studentsList, false);
-				return true;
+	private long deleteStudentInfo() throws IOException {
+		System.out.println("Enter student matrix mumber");
+		Scanner scDelete = new Scanner(System.in);
+		long number = scDelete.nextLong();
+		
+		List<StudentInfo> list = readObjectsFromFile();
+		
+		for (int i = 0; i < list.size(); i++) {
+			if (list.get(i).getMartixNumber() == number) {
+				list.remove(i);
+				writeObjectsToFile(list, false);
+				return number;
 			}
 		}
-		return false;
+		return -1;
 	}
 
-	private boolean updateStudentInfo(long number) throws IOException {
-		for (int i = 0; i < studentsList.size(); i++) {
-			if (studentsList.get(i).getMartixNumber() == number) {
-				StudentInfo student = readInfoFromConsole(true);
-				if (student != null) {
-					student.getName();
-					studentsList.get(i).setName(student.getName());
-					studentsList.get(i).setICNumber(student.getICNumber());
-					studentsList.get(i).setMartixNumber(student.getMartixNumber());
-					studentsList.get(i).setGroup(student.getGroup());
-					studentsList.get(i).setMarks(student.getMarks());
-					studentsList.get(i).setGrades(student.getGrades());
-					studentsList.get(i).setNumberOfSubjects(student.getNumberOfSubjects());
-					studentsList.get(i).setSubjectCode(student.getSubjectCode());
-					writeObjectsToFile(studentsList, true);
-					return true;
-				}
-				return false;
-			}
-		}
+	private long updateStudentInfo() throws IOException {
+		System.out.println("Enter student matrix mumber");
+		Scanner scUpdate = new Scanner(System.in);
+		long number = scUpdate.nextLong();
+		System.out.println("Input new information");
+		
+		List<StudentInfo> list = readObjectsFromFile();
 
-		return false;
+		for (int i = 0; i < list.size(); i++) {
+			if (list.get(i).getMartixNumber() != number)
+				continue;
+
+			StudentInfo student = readInfoFromConsole(true);
+			if (student == null) {
+				System.err.println("Failure to update sudent");
+				return -1;
+			}
+
+			student.getName();
+			list.get(i).setName(student.getName());
+			list.get(i).setICNumber(student.getICNumber());
+			list.get(i).setMartixNumber(student.getMartixNumber());
+			list.get(i).setGroup(student.getGroup());
+			list.get(i).setMarks(student.getMarks());
+			list.get(i).setGrades(student.getGrades());
+			list.get(i).setNumberOfSubjects(student.getNumberOfSubjects());
+			list.get(i).setSubjectCode(student.getSubjectCode());
+			writeObjectsToFile(list, true);
+			return number;
+		}
+		
+		System.err.println("No student with matrix number " + number);
+		return -1;
 	}
 
 	private void displayAllStudentsData() throws IOException {
@@ -267,10 +296,9 @@ public class ApplicationHandler {
 						map.put(stud.getSubjectCode()[i], 1);
 					}
 				}
-				
 			}
 		}
-		
+	
 		int most = -1;
 		int gradCode = -1;
 		
@@ -280,12 +308,11 @@ public class ApplicationHandler {
 				gradCode = grad;
 			}
 		}
-		
 		System.out.println("Subject with most failed student " + gradCode);
 	}
 	
 	private void displaySubjectWithMostPassedStudent() throws IOException {
-List<StudentInfo> list = readObjectsFromFile();
+		List<StudentInfo> list = readObjectsFromFile();
 		
 		Map <Integer, Integer> map = new HashMap<Integer, Integer>();
 		for(StudentInfo stud: list) {
@@ -299,7 +326,6 @@ List<StudentInfo> list = readObjectsFromFile();
 						map.put(stud.getSubjectCode()[i], 1);
 					}
 				}
-				
 			}
 		}
 		
@@ -324,7 +350,7 @@ List<StudentInfo> list = readObjectsFromFile();
 		return true;
 	}
 
-	private StudentInfo readInfoFromConsole(boolean isUpdate) {
+	private StudentInfo readInfoFromConsole(boolean isUpdate) throws IOException {
 		String name;
 		long icNumber;
 		long martixNumber;
@@ -333,6 +359,8 @@ List<StudentInfo> list = readObjectsFromFile();
 		int[] subjectCode;
 		int[] marks;
 		int[] grades;
+		
+		List<StudentInfo> list = readObjectsFromFile();
 
 		Scanner sc = new Scanner(System.in);
 		System.out.print("Enter name: ");
@@ -341,8 +369,8 @@ List<StudentInfo> list = readObjectsFromFile();
 		System.out.print("Enter IC number: ");
 		icNumber = sc.nextLong();
 		if (isUpdate == false) {
-			for (int i = 0; i < studentsList.size(); i++) {
-				if (studentsList.get(i).getICNumber() == icNumber) {
+			for (int i = 0; i < list.size(); i++) {
+				if (list.get(i).getICNumber() == icNumber) {
 					System.err.println(
 							"Student with IC Number " + icNumber + " already exists. IC Number should be unique");
 					return null;
@@ -353,8 +381,8 @@ List<StudentInfo> list = readObjectsFromFile();
 		System.out.print("Enter martix number: ");
 		martixNumber = sc.nextInt();
 		if (isUpdate == false) {
-			for (int i = 0; i < studentsList.size(); i++) {
-				if (studentsList.get(i).getMartixNumber() == martixNumber) {
+			for (int i = 0; i < list.size(); i++) {
+				if (list.get(i).getMartixNumber() == martixNumber) {
 					System.err.println("Student with matrix number " + martixNumber
 							+ " already exists. Matrix number should be unique");
 					return null;
@@ -383,47 +411,31 @@ List<StudentInfo> list = readObjectsFromFile();
 			grades[i] = sc.nextInt();
 		StudentInfo student = new StudentInfo(name, icNumber, martixNumber, group, numberOfSubjects, subjectCode, marks,
 				grades);
+		
 		return student;
 	}
 
 	private boolean addNewStudenInfo() throws IOException {
-		if (isExist(fileName)) {
-			StudentInfo student = readInfoFromConsole(false);
-			System.out.print("Before " + studentsList.toString());
-			if (student != null) {
-				studentsList.add(student);
-				System.out.print("After " + studentsList.toString());
-				writeObjectsToFile(studentsList, false);
-				return true;
-			}
-			return false;
-		} else {
-			System.err.println("File does not exists");
-			return false;
-		}
+		StudentInfo student = readInfoFromConsole(false);
+		List<StudentInfo> list = readObjectsFromFile();
 
+		if (null == student)
+			return false;
+
+		list.add(student);
+		writeObjectsToFile(list, false);
+		return true;
 	}
 
-	private void enterPathToFile() {
-		System.out.print("Enter path to file: ");
-		Scanner sc = new Scanner(System.in);
-		fileName = sc.nextLine();
-		sc.close();
-	}
-
-	public static boolean isExist(String filePath) {
+	public boolean isExist(String filePath) {
 		File file = new File(filePath);
-		if (file.exists())
-			return true;
-		else {
-			System.out.println("There is no file with absolute path " + filePath);
-			return false;
-		}
+		return file.exists();
 	}
 
 	public void writeObjectsToFile(List<StudentInfo> studentsList, boolean isAppend) throws IOException {
 		ObjectOutputStream oos = null;
 		FileOutputStream fout = null;
+		
 		try {
 			fout = new FileOutputStream(fileName, isAppend);
 			for (StudentInfo haj : studentsList) {
@@ -433,35 +445,38 @@ List<StudentInfo> list = readObjectsFromFile();
 			}
 			oos.flush();
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			System.err.println("Failure write to file: " + ex.getMessage());
 		} finally {
 			if (oos != null) {
 				oos.close();
 			}
 		}
-
 	}
 
 	public List<StudentInfo> readObjectsFromFile() throws IOException {
-
 		ObjectInputStream objectinputstream = null;
 		FileInputStream streamIn = null;
-		List<StudentInfo> newStudents = new LinkedList<StudentInfo>();
+		List<StudentInfo> newStudents = new CustomLinkedList<StudentInfo>();
+		
 		try {
 			streamIn = new FileInputStream(fileName);
-
 			while (streamIn.available() != 0) {
 				objectinputstream = new ObjectInputStream(streamIn);
 				StudentInfo a = (StudentInfo) objectinputstream.readObject();
 				newStudents.add(a);
 			}
 			return newStudents;
+			
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println("Failure read to file: " + e.getMessage());
 			return null;
+			
 		} finally {
 			if (objectinputstream != null) {
 				objectinputstream.close();
+			}
+			if (streamIn != null) {
+				streamIn.close();
 			}
 		}
 
